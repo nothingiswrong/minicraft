@@ -1,3 +1,4 @@
+using Game.Shaders;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.Desktop;
@@ -8,18 +9,22 @@ namespace Game;
 public class MainWindow : GameWindow
 {
     private int _vertexBufferObject;
+    private Shader _shader;
+    private int _vertexArrayObject;
 
     private readonly float[] _vertices = new[]
     {
         0f, 0.5f, 0,
         -0.5f, 0, 0,
-        0, 5f, 0, 0
+        0.5f, 0, 0
     };
 
     public MainWindow()
         : base(GameWindowSettings.Default, NativeWindowSettings.Default)
     {
         CenterWindow(new Vector2i(1000, 500));
+        _shader = new Shader("/home/fyodor/RiderProjects/Minecraft/Game/Shaders/shader.vert",
+            "/home/fyodor/RiderProjects/Minecraft/Game/Shaders/shader.fraq");
     }
 
     protected override void OnLoad()
@@ -27,12 +32,13 @@ public class MainWindow : GameWindow
         base.OnLoad();
         _vertexBufferObject = GL.GenBuffer();
         GL.BindBuffer(OpenTK.Graphics.OpenGL4.BufferTarget.ArrayBuffer, _vertexBufferObject);
-        GL.BufferData(BufferTarget.ArrayBuffer, _vertices.Length * sizeof(float), _vertices, BufferUsageHint.StaticDraw);
+        GL.BufferData(BufferTarget.ArrayBuffer, _vertices.Length * sizeof(float), _vertices,
+            BufferUsageHint.StaticDraw);
 
-        var vertexArrayObject = GL.GenVertexArray();
-        GL.BindVertexArray(vertexArrayObject);
+        _vertexArrayObject = GL.GenVertexArray();
+        GL.BindVertexArray(_vertexArrayObject);
         GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 3 * sizeof(float), 0);
-        
+        GL.EnableVertexAttribArray(0);
     }
 
     protected override void OnUpdateFrame(FrameEventArgs args)
@@ -42,10 +48,16 @@ public class MainWindow : GameWindow
 
     protected override void OnRenderFrame(FrameEventArgs args)
     {
+        base.OnRenderFrame(args);
+
         GL.ClearColor(Color4.Aqua);
         GL.Clear(ClearBufferMask.ColorBufferBit);
-        Context.SwapBuffers();
-        base.OnRenderFrame(args);
+        _shader.Use();
+
+
+        GL.BindVertexArray(_vertexArrayObject);
+        GL.DrawArrays(PrimitiveType.Triangles, 0, 3);
+        SwapBuffers();
     }
 
     protected override void OnResize(ResizeEventArgs e)
