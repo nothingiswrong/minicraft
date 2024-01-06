@@ -9,14 +9,22 @@ namespace Game;
 public class MainWindow : GameWindow
 {
     private int _vertexBufferObject;
-    private Shader _shader;
+    private readonly Shader _shader;
     private int _vertexArrayObject;
+    private int _elementBufferObject;
 
-    private readonly float[] _vertices = new[]
+    private uint[] _indices = new uint[]
     {
-        0f, 0.5f, 0,
-        -0.5f, 0, 0,
-        0.5f, 0, 0
+        0, 1, 2,
+        2, 3, 0
+    };
+
+    private readonly float[] _vertices = new float[]
+    {
+        0, 0, 0,
+        0, .5f, 0,
+        .5f, .5f, 0,
+        .5f, 0, 0
     };
 
     public MainWindow()
@@ -29,16 +37,23 @@ public class MainWindow : GameWindow
 
     protected override void OnLoad()
     {
+        //VBO
         base.OnLoad();
         _vertexBufferObject = GL.GenBuffer();
         GL.BindBuffer(OpenTK.Graphics.OpenGL4.BufferTarget.ArrayBuffer, _vertexBufferObject);
         GL.BufferData(BufferTarget.ArrayBuffer, _vertices.Length * sizeof(float), _vertices,
             BufferUsageHint.StaticDraw);
-
+        //VAO
         _vertexArrayObject = GL.GenVertexArray();
         GL.BindVertexArray(_vertexArrayObject);
         GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 3 * sizeof(float), 0);
         GL.EnableVertexAttribArray(0);
+
+        //EBO 
+        _elementBufferObject = GL.GenBuffer();
+        GL.BindBuffer(BufferTarget.ElementArrayBuffer, _elementBufferObject);
+        GL.BufferData(BufferTarget.ElementArrayBuffer, _indices.Length * sizeof(uint), _indices,
+            BufferUsageHint.StaticDraw);
     }
 
     protected override void OnUpdateFrame(FrameEventArgs args)
@@ -56,7 +71,7 @@ public class MainWindow : GameWindow
 
 
         GL.BindVertexArray(_vertexArrayObject);
-        GL.DrawArrays(PrimitiveType.Triangles, 0, 3);
+        GL.DrawElements(PrimitiveType.Triangles, _indices.Length, DrawElementsType.UnsignedInt, 0);
         SwapBuffers();
     }
 
